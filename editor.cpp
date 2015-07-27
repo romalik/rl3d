@@ -367,7 +367,7 @@ public:
                 dump();
             }
         } else {
-            if( k == 13 ) {
+            if( k == 13 || k == 10 ) {
                 textBuf[cTextPos] = 0;
                 if(textDest == TEXT_TEXTURE) {
                     map.edges[activeEdge].texName = std::string(textBuf);

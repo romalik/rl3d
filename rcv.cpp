@@ -46,45 +46,32 @@ bool sorter(Intersection i, Intersection j) { return i.distance < j.distance; }
 
 void getAllIntersections(EdgeMap & map, float x, float y, float yaw, float fov, int nBeams, IntersectionMap & ms) {
     for(int i = 0; i<nBeams; i++) {
-        float cBeamAngle = yaw + (nBeams/2 - i) * (fov / nBeams);
+        float cBeamAngle = yaw + ((float)nBeams/2.0f - (float)i) * (fov / (float)nBeams);
 
         while(cBeamAngle < -M_PI) cBeamAngle += 2.0f*M_PI;
         while(cBeamAngle > M_PI) cBeamAngle -= 2.0f*M_PI;
 
-        /*
-         *
-         * t cos(a) = x0 - x + l(x1 - x0)
-         * t sin(a) = y0 - y + l(y1 - y0)
-         *
-         * (x0 - x + l(x1 - x0))/cos(a) = (y0 - y + l(y1 - y0))/sin(a)
-         * l(x1 - x0) - l(y1 - y0) * cos(a) / sin(a) = (y0 - y) * sin(a) - (x0 - x)
-         * l(x1 - x0 - (y1 - y0) * cos(a)/sin(a)) = (y0 - y) * sin(a) - (x0 - x)
-         *
-         * l = ( (y0 - y) * sin(a) - (x0 - x) ) / (x1 - x0 - (y1 - y0) * cos(a)/sin(a));
-         *
-         * l = [0..1] <-- intersecton
-         *
-         * (sqrt((x1 - x0)^2 + (y1 - y0 )^2) * l) modus texWidth <-- offset;
-         *
-         * t = [0..] <-- distance
-         *
-         */
 
-        for(int i = 0; i<map.size(); i++) {
-            float x0 = map[i].x0;
-            float x1 = map[i].x1;
-            float y0 = map[i].y0;
-            float y1 = map[i].y1;
+        for(int j = 0; j<map.size(); j++) {
+            float x0 = map[j].x0;
+            float x1 = map[j].x1;
+            float y0 = map[j].y0;
+            float y1 = map[j].y1;
             float a = cBeamAngle;
 
-            float l = ( (y0 - y) * sin(a) - (x0 - x) ) / (x1 - x0 - (y1 - y0) * cos(a)/sin(a));
-            if( l >= 0 && l <= 1) {
-                float t = ( x0 - x + l*(x1 - x0) ) / cos(a);
+			float d0 = - cos(a) * (y0+y1) + sin(a) * (x0 + x1);
+			float d1 = (x1 + x) * (y0 + y1) - (y1 + y) * (x0 + x1);
+			float d2 = -cos(a) * (y1 + y) + sin(a) * (x1 + x);
+
+			float t = d1 / d0;
+			float l = d2 / d0;
+
+            if( l >= 0.0f && l <= 1.0f) {
                 if(t > 0) {
                     Intersection iSect;
                     iSect.distance = t;
-                    iSect.type = map[i].type;
-                    iSect.offset = 0;//fmod((sqrt((x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0)) * l) , map[i].texWidth);
+                    iSect.type = map[j].type;
+                    iSect.offset = fmod((sqrt((x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0)) * l) , map[j].texWidth);
                     ms[i].push_back(iSect);
                 }
             }
@@ -248,7 +235,8 @@ void drawSprites(cv::Mat & render, cv::Mat & zBuffer, std::vector<Sprite> & spri
                 int targetStart = (1.0f - scaleFactor)*render.rows/2.0f;
                 int targetEnd = (1.0f + scaleFactor)*render.rows/2.0f;
                 for(int r = std::max(targetStart,0); r<std::min(targetEnd,render.rows); r++) {
-                    cv::Vec3b colour = spriteLine.at<cv::Vec3b>(spriteLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;
+                    //cv::Vec3b colour = spriteLine.at<cv::Vec3b>(spriteLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;
+                    cv::Vec3b colour = cv::Vec3b(255,255,255);//spriteLine.at<cv::Vec3b>(spriteLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;
                     if(colour.val[0]==255 && colour.val[1]==255 && colour.val[2]==255) {
                         //transparent
                     } else {
@@ -285,8 +273,24 @@ void drawWalls(cv::Mat & render, cv::Mat & zBuffer, EdgeMap & map, float fov, in
             //manual scale
             int targetStart = (1.0f - scaleFactor)*render.rows/2.0f;
             int targetEnd = (1.0f + scaleFactor)*render.rows/2.0f;
+
+
+/*
+            for(int r = std::max(targetStart,0); r<std::min(targetEnd,render.rows); r++) {
+                if(zBuffer.at<float>(r,i) > distance) {
+					cv::Vec3b colour = cv::Vec3b(0,0,0);
+					if(offset < 0.02f || offset > 0.98f || r - targetStart < 3 || targetEnd - r < 3) {
+						colour = cv::Vec3b(0,255,0);
+					}
+                    render.at<cv::Vec3b>(r,i) = colour;
+                    zBuffer.at<float>(r,i) = distance;
+                }
+            }
+*/
+
             for(int r = std::max(targetStart,0); r<std::min(targetEnd,render.rows); r++) {
                 cv::Vec3b colour = texLine.at<cv::Vec3b>(texLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;
+				//cv::Vec3b colour = cv::Vec3b(250,250,250);
                 if(colour.val[0]==255 && colour.val[1]==255 && colour.val[2]==255) {
                     //transparent
                 } else {
@@ -296,18 +300,22 @@ void drawWalls(cv::Mat & render, cv::Mat & zBuffer, EdgeMap & map, float fov, in
                     }
                 }
             }
+
         }
     }
 }
 
 
 void drawBgSolid(cv::Mat & render) {
+	render = cv::Scalar(0,0,0);
+/*
     for(int i = 0; i<render.rows; i++) {
         if(i < render.rows/2)
             cv::line(render, cv::Point(0, i), cv::Point(render.cols-1,i), cv::Scalar(255,100,100));
         else
             cv::line(render, cv::Point(0, i), cv::Point(render.cols-1,i), cv::Scalar(50,100,50));
     }
+*/
 }
 
 void drawBgImage(cv::Mat & render, cv::Mat & bgImage, float yaw, float fov, int nBeams) {
@@ -325,8 +333,8 @@ void newRenderAt(cv::Mat & render, EdgeMap & map, cv::Mat & bgImage, float fov, 
 
     cv::Mat zBuffer = cv::Mat(render.rows, render.cols, CV_32FC1, cv::Scalar(10000));
 
-	//drawBgSolid(render);
-	drawBgImage(render, bgImage, angle, fov, nBeams);
+	drawBgSolid(render);
+	//drawBgImage(render, bgImage, angle, fov, nBeams);
     //drawSprites(render, zBuffer, sprites, fov, nBeams, texpack, x, y, angle);
     drawWalls(render, zBuffer, map, fov, nBeams, texpack, x, y, angle);
 }
@@ -372,14 +380,21 @@ int main() {
 //	cv::Mat map = cv::imread("test_map.bmp", cv::IMREAD_GRAYSCALE);
 
     EdgeMap map;
-    map.push_back(Edge(-6.650000f, 0.750000f, -1.150000f, 8.400000f, 100));
-    map.push_back(Edge(-1.150000f, 8.400000f, 5.500000f, 7.700000f, 100));
-    map.push_back(Edge(5.500000f, 7.700000f, 9.700000f, 1.700000f, 100));
-    map.push_back(Edge(9.700000f, 1.700000f, 7.550000f, -4.650000f, 150));
-    map.push_back(Edge(-3.200000f, -8.700000f, -6.650000f, 0.750000f, 50));
-    map.push_back(Edge(2.175000f, -6.675000f, -3.200000f, -8.700000f, 100));
-    map.push_back(Edge(7.550000f, -4.650000f, 2.800000f, -6.400000f, 100));
-    map.push_back(Edge(2.800000f, -6.400000f, 2.175000f, -6.675000f, 200));
+
+/*
+map.push_back(Edge(-9.950000f, 8.350000f, -0.400000f, -8.300000f, 150));
+map.push_back(Edge(-0.400000f, -8.300000f, 12.400000f, 4.100000f, 150));
+map.push_back(Edge(12.400000f, 4.100000f, 1.000000f, 1.800000f, 150));
+map.push_back(Edge(1.000000f, 1.800000f, -9.950000f, 8.350000f, 150));
+*/
+    map.push_back(Edge(10.0f, 10.0f, 10.0f, -10.0f, 100));
+    map.push_back(Edge(10.0f, -10.0f, 1.0f, -1.0f, 100));
+	
+    map.push_back(Edge(1.0f, -1.0f, -10.0f, -10.0f, 100));
+
+    map.push_back(Edge(-10.0f, -10.0f, -10.0f, 10.0f, 100));
+    map.push_back(Edge(-10.0f, 10.0f, 10.0f, 10.0f, 100));
+
     int wndWidth = 1440;
 	int wndHeight = 900;
 
@@ -387,8 +402,8 @@ int main() {
 
 	float df = 0.0f;
 	float ds = 0.0f;
-	float x = 30.0f;
-    float y = -20.0f;
+	float x = 0.0f;
+    float y = 0.0f;
 	float angle = -M_PI/2.0f;
 	float dangle = 0.3f;
 	float fov = M_PI/3.0f;
