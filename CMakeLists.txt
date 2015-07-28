@@ -7,3 +7,4 @@ add_executable( rcv rcv.cpp )
 TARGET_LINK_LIBRARIES( rcv ${OpenCV_LIBS})  
 add_executable( editor editor.cpp )
 TARGET_LINK_LIBRARIES( editor ${OpenCV_LIBS})  
+
