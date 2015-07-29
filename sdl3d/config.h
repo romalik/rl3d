@@ -1,5 +1,18 @@
-#define IO_STDIO 1
-#define IO_SDL 0
+#define VIEWPORT_W 800
+#define VIEWPORT_H 400
+
+#define IO_STDIO 0
+#define IO_SDL 1
+
+#if IO_STDIO == 1
+    #define CEILING_COLOR '.'
+    #define FLOOR_COLOR '-'
+#endif
+
+#if IO_SDL == 1
+    #define CEILING_COLOR 0x000000ff
+    #define FLOOR_COLOR 0x0000ff00
+#endif
 
 #define RENDER_BORDERS 1
 #define RENDER_TEXTURES 0

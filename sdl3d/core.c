@@ -7,11 +7,15 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
 
+static int terminateRequest = 0;
+
 static struct PlayerState playerState;
 static struct Map map;
 static struct Viewport viewport;
 
 static float * zBuffer;
+
+
 
 int maxIntersections = 100;
 
@@ -34,8 +38,8 @@ int core_init(int argc, char ** argv) {
 	playerState.ds = 0;
 	playerState.dyaw = 0;
 
-	viewport.w = 80;
-	viewport.h = 40;
+    viewport.w = VIEWPORT_W;
+    viewport.h = VIEWPORT_H;
 	viewport.data = (int*)malloc(viewport.w * viewport.h * sizeof(int));
 	viewport.fov = M_PI/3.0f;
 
@@ -148,8 +152,11 @@ void drawBg() {
 	int i;
 	for(i = 0; i<viewport.h * viewport.w; i++) {
 		zBuffer[i] = 1000.0f;
-		viewport.data[i] = ' ';
-	}
+        if(i<viewport.h*viewport.w / 2)
+            viewport.data[i] = CEILING_COLOR;
+        else
+            viewport.data[i] = FLOOR_COLOR;
+    }
 }
 
 
@@ -218,7 +225,7 @@ double getTime() {
 
 void processEvent(int k) {
         if((char)k == 'q') {                                                                                  
-            //break;                                                                                            
+            terminateRequest = 1;
         } else if((char)k == ',') {                                                                           
             playerState.ds = -1.0f;                                                                                        
         } else if((char)k == '.') {                                                                           
@@ -257,7 +264,8 @@ int core_loop() {
 
 	int event = io_getEvent();
 	processEvent(event);
-
+    if(terminateRequest)
+        return 1;
 	
 
 	return 0;

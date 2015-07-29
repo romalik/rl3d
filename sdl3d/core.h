@@ -1,5 +1,6 @@
 #ifndef CORE_H_
 #define CORE_H
+#include "config.h"
 #include "types.h"
 #include "io_generic.h"
 
