@@ -1,8 +1,8 @@
-#include "io_stdio.h"
+#include "io_sdl.h"
 #include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
-void stdio_load_map(struct Map * map, char * path) {
+void sdl_load_map(struct Map * map, char * path) {
 	FILE * fd = fopen(path, "r");
 	int w = 0;
 	int h = 0;
@@ -33,7 +33,7 @@ void stdio_load_map(struct Map * map, char * path) {
 	}
 }
 
-void stdio_refresh_viewport(struct Viewport * vp) {
+void sdl_refresh_viewport(struct Viewport * vp) {
 	static int frame = 0;
 	int c = 0;
 	int r = 0;
@@ -60,7 +60,7 @@ void stdio_refresh_viewport(struct Viewport * vp) {
 
 /* KBHIT */                                                                                                   
                                                                                                               
-#include <stdio.h>                                                                                            
+#include <sdl.h>                                                                                            
 #include <termios.h>                                                                                          
 #include <unistd.h>                                                                                           
 #include <fcntl.h>                                                                                            
@@ -94,11 +94,11 @@ int kbhit(void)
                                                                                                               
 /* END KBHIT */    
 
-void stdio_io_init(struct Viewport * vp) {
+void sdl_io_init(struct Viewport * vp) {
 }
-void stdio_io_uninit(struct Viewport * vp) {
+void sdl_io_uninit(struct Viewport * vp) {
 }
-int stdio_io_getEvent() {
+int sdl_io_getEvent() {
 	int event = 0;
 	    if(kbhit()) {
 			event = getchar();                                                                                    
@@ -106,3 +106,50 @@ int stdio_io_getEvent() {
 	return event;
 }
 
+#include <SDL2/SDL.h>
+#include <stdio.h>
+
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
+
+int i___main( int argc, char* args[] )
+{
+	SDL_Window* window = NULL;
+	SDL_Surface* screenSurface = NULL;
+
+	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+	{
+		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
+	}
+	else
+	{
+		//Create window
+		window = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( window == NULL )
+		{
+			printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
+		}
+		else
+		{
+			//Get window surface
+			screenSurface = SDL_GetWindowSurface( window );
+
+			//Fill the surface white
+			SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
+			
+			//Update the surface
+			SDL_UpdateWindowSurface( window );
+
+			//Wait two seconds
+			SDL_Delay( 2000 );
+		}
+	}
+
+	//Destroy window
+	SDL_DestroyWindow( window );
+
+	//Quit SDL subsystems
+	SDL_Quit();
+
+	return 0;
+}

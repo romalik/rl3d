@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
+#include <stdio.h>
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
 
@@ -27,7 +27,7 @@ struct Intersection * intersectionBuffer;
 int core_init(int argc, char ** argv) {
 	load_map(&map, argv[1]);
 
-	playerState.x = 1;
+	playerState.x = 2;
 	playerState.y = -2;
 	playerState.yaw = 0;
 	playerState.df = 0;
@@ -42,6 +42,8 @@ int core_init(int argc, char ** argv) {
 	intersectionBuffer = (struct Intersection *)malloc(maxIntersections * viewport.w * sizeof(struct Intersection));
 
 	zBuffer = (float *)malloc(viewport.h * viewport.w * sizeof(float));
+
+	io_init(&viewport);
 
 	return 0;
 }
@@ -59,11 +61,15 @@ void getAllIntersections(float x, float y, float yaw) {
         while(cBeamAngle > M_PI) cBeamAngle -= 2.0f*M_PI;
 
         //get intersections with vertical lines
-		int n;
-        for(n = 0; n < map.w; n++) {
+		int n = floor(x);
+		int dn = cos(cBeamAngle) > 0? 1: -1;
+        //for(n = 0; n < map.w; n++) {
+		while(1) {
             float dist = ((float)n - x)/cos(cBeamAngle);
-            if(dist < 0)
+            if(dist < 0) {
+				n+=dn;
                 continue;
+			}
 
             float xi = n;
             float yi = y + ((float)n-x)*sin(cBeamAngle)/cos(cBeamAngle);
@@ -75,7 +81,8 @@ void getAllIntersections(float x, float y, float yaw) {
             int ym = - (int)yi;
 
             if(xm < 0 || xm >= map.w || ym < 0 || ym >= map.h)
-                continue;
+                //continue;
+				break;
 
             
             if(map.data[ym * map.w + xm] != '.') {
@@ -89,12 +96,18 @@ void getAllIntersections(float x, float y, float yaw) {
                 }
                 cIntersection++;
             }
+
+			n += dn;
         }
-		int m;
-        for(m = 0; m > -map.h; m--) {
+		int m = floor(y);
+		int dm = sin(cBeamAngle) > 0? 1 : -1;
+        //for(m = 0; m > -map.h; m--) {
+		while(1) {
             float dist = ((float)m - y)/sin(cBeamAngle);
-            if(dist < 0)
+            if(dist < 0) {
+				m+=dm;
                 continue;
+			}
 
             float yi = m;
             float xi = x + ((float)m-y)*cos(cBeamAngle)/sin(cBeamAngle);
@@ -106,7 +119,8 @@ void getAllIntersections(float x, float y, float yaw) {
 
 
             if(xm < 0 || xm >= map.w || ym < 0 || ym >= map.h)
-                continue;
+                //continue;
+				break;
 
             
 
@@ -122,6 +136,7 @@ void getAllIntersections(float x, float y, float yaw) {
                 }
                 cIntersection++;
             }
+			m+=dm;
         }
 
 
@@ -177,44 +192,6 @@ void drawWalls() {
 
 }
 
-
-
-/* KBHIT */
-
-#include <stdio.h>
-#include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
- 
-int kbhit(void)
-{
-  struct termios oldt, newt;
-  int ch;
-  int oldf;
- 
-  tcgetattr(STDIN_FILENO, &oldt);
-  newt = oldt;
-  newt.c_lflag &= ~(ICANON | ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-  oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
- 
-  ch = getchar();
- 
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  fcntl(STDIN_FILENO, F_SETFL, oldf);
- 
-  if(ch != EOF)
-  {
-    ungetc(ch, stdin);
-    return 1;
-  }
- 
-  return 0;
-}
-
-/* END KBHIT */
-
 void calcNewPosition(float dt) {
     float dx = playerState.df * cos(playerState.yaw) + playerState.ds * sin(playerState.yaw);                                                             
     float dy = playerState.df * sin(playerState.yaw) - playerState.ds * cos(playerState.yaw);                                                             
@@ -240,8 +217,6 @@ double getTime() {
 } 
 
 void processEvent(int k) {
-
-
         if((char)k == 'q') {                                                                                  
             //break;                                                                                            
         } else if((char)k == ',') {                                                                           
@@ -274,18 +249,14 @@ int core_loop() {
 	prevTime = currentTime;
 
 	calcNewPosition(dTime);
+	printf("X: %f Y: %f (cell %d %d) YAW: %d\n", playerState.x, playerState.y, (int)floor(playerState.x), (int)floor(playerState.y), (int)(playerState.yaw*180.0f/M_PI));
 	drawBg();
 	drawWalls();
 	refresh_viewport(&viewport);
-	printf("X: %f Y: %f YAW: %d\n", playerState.x, playerState.y, (int)(playerState.yaw*180.0f/M_PI));
 	usleep(100*1000);
 
-	if(kbhit()) {
-		int c = getchar();
-		processEvent(c);
-	} else {
-		processEvent(0);
-	}
+	int event = io_getEvent();
+	processEvent(event);
 
 	
 
@@ -293,6 +264,6 @@ int core_loop() {
 }
 
 int core_uninit() {
-
+	io_uninit(&viewport);
 	return 0;
 }
