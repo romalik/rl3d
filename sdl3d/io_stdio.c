@@ -2,37 +2,6 @@
 #include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
-void stdio_load_map(struct Map * map, char * path) {
-	FILE * fd = fopen(path, "r");
-	int w = 0;
-	int h = 0;
-	fscanf(fd, "%d %d\n", &w, &h);
-	printf("Loading map %s : %dx%d\n" , path, w, h);
-	map->data = (int *)malloc(w*h*sizeof(int));
-	map->w = w;
-	map->h = h;
-	int i = 0;
-	while(i < w*h) {
-		int c = fgetc(fd);
-		if(c == EOF)
-			break;
-
-		if(c == '\n' || c == '\r')
-			continue;
-
-		map->data[i] = c & 0xff;
-		i++;
-	}
-
-	int j = 0;
-	for(i = 0; i<h; i++) {
-		for(j = 0; j<w; j++) {
-			printf("%c", map->data[i*w + j]);
-		}
-		printf("\n");
-	}
-}
-
 void stdio_refresh_viewport(struct Viewport * vp) {
 	static int frame = 0;
 	int c = 0;

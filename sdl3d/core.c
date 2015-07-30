@@ -89,7 +89,7 @@ void getAllIntersections(float x, float y, float yaw) {
 				break;
 
             
-            if(map.data[ym * map.w + xm] != '.') {
+            if(map.data[ym * map.w + xm] != 0) {
                 
                 intersectionBuffer[i*maxIntersections + cIntersection].type = map.data[ym * map.w + xm];
                 intersectionBuffer[i*maxIntersections + cIntersection].distance = dist;
@@ -128,7 +128,7 @@ void getAllIntersections(float x, float y, float yaw) {
 
             
 
-            if(map.data[ym * map.w + xm] != '.') {                                                      
+            if(map.data[ym * map.w + xm] != 0) {                                                      
                                                                                                               
                 intersectionBuffer[i*maxIntersections + cIntersection].type = map.data[ym * map.w + xm];                
                 intersectionBuffer[i*maxIntersections + cIntersection].distance = dist;                                        
@@ -178,14 +178,28 @@ void drawWalls() {
             float scaleFactor = 1.0f/distance;                                                                
             int targetStart = (1.0f - scaleFactor)*viewport.h/2.0f;                                          
             int targetEnd = (1.0f + scaleFactor)*viewport.h/2.0f;                                            
-			int colour = textype;
 			int r;
             for(r = max(targetStart,0); r<min(targetEnd, viewport.h); r++) {                    
                 /*cv::Vec3b colour = texLine.at<cv::Vec3b>(texLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;*/
+				int colour = textype;
                 if(colour == 255) {                          
                     //transparent                                                                             
                 } else {                                                                                      
                     if(zBuffer[r*viewport.w + i] > distance) {                                                   
+						#if DISTANT_SHADE == 1
+						int newCol = 0xff000000;
+						int shadeAmount = distance * DISTANT_SHADE_INTENSITY;
+						int channel = 0;
+						int mask = 0xff;
+						for(channel = 0; channel < 3; channel ++) {
+							int cChannel = (colour & (mask << (8*channel))) >> (8*channel);
+							cChannel -= shadeAmount;
+							if(cChannel < 0) cChannel = 0;
+							newCol |= cChannel << (8*channel);
+						} 
+						colour = newCol;
+
+						#endif
                         viewport.data[r*viewport.w + i] = colour;                                                   
                         zBuffer[r*viewport.w + i] = distance;                                                    
                     }                                                                                         

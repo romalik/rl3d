@@ -11,47 +11,15 @@ static SDL_Window* window = NULL;
 static SDL_Surface* screenSurface = NULL;
 static SDL_Renderer* renderer = NULL;
 
-
-
-
-void sdl_load_map(struct Map * map, char * path) {
-	FILE * fd = fopen(path, "r");
-	int w = 0;
-	int h = 0;
-	fscanf(fd, "%d %d\n", &w, &h);
-	printf("Loading map %s : %dx%d\n" , path, w, h);
-	map->data = (int *)malloc(w*h*sizeof(int));
-	map->w = w;
-	map->h = h;
-	int i = 0;
-	while(i < w*h) {
-		int c = fgetc(fd);
-		if(c == EOF)
-			break;
-
-		if(c == '\n' || c == '\r')
-			continue;
-
-		map->data[i] = c & 0xff;
-		i++;
-	}
-
-	int j = 0;
-	for(i = 0; i<h; i++) {
-		for(j = 0; j<w; j++) {
-			printf("%c", map->data[i*w + j]);
-		}
-		printf("\n");
-	}
-}
-
 void sdl_refresh_viewport(struct Viewport * vp) {
     SDL_LockSurface(screenSurface);
     int r = 0;
     int c = 0;
     for(r = 0; r<vp->h; r++) {
         for(c = 0; c<vp->w; c++) {
-            ((uint32_t *)(screenSurface->pixels))[r*vp->w + c] = vp->data[r*vp->w + c] == ' '?0x00ffffff:0x00ff0000;
+            ((uint32_t *)(screenSurface->pixels))[r*vp->w + c] = vp->data[r*vp->w + c];// == ' ' ? 
+//				SDL_MapRGB( screenSurface->format, 0x00, 0x00, 0x00 ):
+//				SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF );
         }
     }
 

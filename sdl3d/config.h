@@ -10,8 +10,8 @@
 #endif
 
 #if IO_SDL == 1
-    #define CEILING_COLOR 0x000000ff
-    #define FLOOR_COLOR 0x0000ff00
+    #define CEILING_COLOR 0x00808080
+    #define FLOOR_COLOR 0x00808080
 #endif
 
 #define RENDER_BORDERS 1
@@ -31,4 +31,5 @@
 
 #define INTERACTIVE_OBJECTS 0
 
-
+#define DISTANT_SHADE 1
+#define DISTANT_SHADE_INTENSITY 10.0f
