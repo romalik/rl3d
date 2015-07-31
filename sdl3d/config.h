@@ -1,21 +1,30 @@
-#define VIEWPORT_W 800
-#define VIEWPORT_H 400
-
 #define IO_STDIO 0
 #define IO_SDL 1
 
 #if IO_STDIO == 1
+	#define VIEWPORT_W 80
+	#define VIEWPORT_H 40
+
     #define CEILING_COLOR '.'
     #define FLOOR_COLOR '-'
+
+	#define DISTANT_SHADE 0
+	#define DISTANT_SHADE_INTENSITY 10.0f
 #endif
 
 #if IO_SDL == 1
+	#define VIEWPORT_W 800
+	#define VIEWPORT_H 400
+
     #define CEILING_COLOR 0x00808080
     #define FLOOR_COLOR 0x00808080
+
+	#define DISTANT_SHADE 1
+	#define DISTANT_SHADE_INTENSITY 10.0f
 #endif
 
 #define RENDER_BORDERS 1
-#define RENDER_TEXTURES 0
+#define RENDER_TEXTURES 1
 
 #define TRANSPARENT_TEXTURES 0
 
@@ -31,5 +40,3 @@
 
 #define INTERACTIVE_OBJECTS 0
 
-#define DISTANT_SHADE 1
-#define DISTANT_SHADE_INTENSITY 10.0f

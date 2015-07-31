@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-
+Texture * generic_loadTexture(char * path) {
+	printf("Texture load not implemented!\n");
+} 
 void generic_load_map(struct Map * map, char * path) {
         FILE * fd = fopen(path, "r");
         int w = 0;

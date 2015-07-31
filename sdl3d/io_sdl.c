@@ -11,8 +11,28 @@ static SDL_Window* window = NULL;
 static SDL_Surface* screenSurface = NULL;
 static SDL_Renderer* renderer = NULL;
 
+
+Texture * sdl_loadTexture(char * path) {
+	Texture * dest;
+	SDL_Surface * newBmp = SDL_LoadBMP(path);
+	if(!newBmp) return 0;
+	newBmp = SDL_ConvertSurface(newBmp, screenSurface->format, SDL_SWSURFACE);
+	printf("BMP load ok\n");
+
+	dest = (Texture *)malloc(sizeof (Texture));
+	printf("Texture : %p \n", dest);
+	dest->w = newBmp->w;
+	dest->h = newBmp->h;
+	printf("BMP: %d %d\n", dest->w, dest->h);
+	dest->data = (uint32_t *)malloc(5*dest->w*dest->h*sizeof(uint32_t));
+	memcpy(dest->data, newBmp->pixels, dest->w*dest->h*sizeof(uint32_t));
+
+	return dest;
+}
+
 void sdl_refresh_viewport(struct Viewport * vp) {
     SDL_LockSurface(screenSurface);
+/*
     int r = 0;
     int c = 0;
     for(r = 0; r<vp->h; r++) {
@@ -22,7 +42,9 @@ void sdl_refresh_viewport(struct Viewport * vp) {
 //				SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF );
         }
     }
+*/
 
+	memcpy(screenSurface->pixels, vp->data, vp->w*vp->h*sizeof(uint32_t));
     SDL_UnlockSurface(screenSurface);
 
     SDL_UpdateWindowSurface( window );
@@ -116,7 +138,6 @@ void sdl_io_init(struct Viewport * vp) {
             SDL_UpdateWindowSurface( window );
         }
     }
-
 }
 void sdl_io_uninit(struct Viewport * vp) {
     //Destroy window
@@ -126,12 +147,112 @@ void sdl_io_uninit(struct Viewport * vp) {
     SDL_Quit();
 
 }
+
+int evMask = 0;
 int sdl_io_getEvent() {
-	int event = 0;
-	    if(kbhit()) {
-			event = getchar();                                                                                    
-		}
-	return event;
+	SDL_Event event;
+	while(SDL_PollEvent( &event )) {
+	switch (event.type) {
+		case SDL_KEYDOWN:
+			switch ( event.key.keysym.sym ) {
+				case SDLK_w:
+					evMask |= EVENT_FORWARD;
+					break;
+				case SDLK_s:
+					evMask |= EVENT_BACKWARD;
+					break;
+				case SDLK_a:
+					evMask |= EVENT_TURN_LEFT;
+					break;
+				case SDLK_d:
+					evMask |= EVENT_TURN_RIGHT;
+					break;
+				case SDLK_COMMA:
+					evMask |= EVENT_STRAFE_LEFT;
+					break;
+				case SDLK_PERIOD:
+					evMask |= EVENT_STRAFE_RIGHT;
+					break;
+				case SDLK_SPACE:
+					evMask |= EVENT_ACTION;
+					break;
+				case SDLK_q:
+					evMask |= EVENT_QUIT;
+					break;
+				case SDLK_LSHIFT:
+					evMask |= EVENT_SPRINT;
+					break;
+				default:
+					break;
+			}
+			break;
+		case SDL_KEYUP:
+			switch ( event.key.keysym.sym ) {
+				case SDLK_w:
+					evMask &= ~EVENT_FORWARD;
+					break;
+				case SDLK_s:
+					evMask &= ~EVENT_BACKWARD;
+					break;
+				case SDLK_a:
+					evMask &= ~EVENT_TURN_LEFT;
+					break;
+				case SDLK_d:
+					evMask &= ~EVENT_TURN_RIGHT;
+					break;
+				case SDLK_COMMA:
+					evMask &= ~EVENT_STRAFE_LEFT;
+					break;
+				case SDLK_PERIOD:
+					evMask &= ~EVENT_STRAFE_RIGHT;
+					break;
+				case SDLK_SPACE:
+					evMask &= ~EVENT_ACTION;
+					break;
+				case SDLK_q:
+					evMask &= ~EVENT_QUIT;
+					break;
+				case SDLK_LSHIFT:
+					evMask &= ~EVENT_SPRINT;
+					break;
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+	}
+	return evMask;
+
+
+/*
+    int event = 0;
+            if(kbhit()) {
+                        int c = getchar();
+                        if(c == 'w') {
+                                event = EVENT_FORWARD;
+                        } else if(c == 's') {
+                                event = EVENT_BACKWARD;
+                        } else if(c == 'a') {
+                                event = EVENT_TURN_LEFT;
+                        } else if(c == 'd') {
+                                event = EVENT_TURN_RIGHT;
+                        } else if(c == ',') {
+                                event = EVENT_STRAFE_LEFT;
+                        } else if(c == '.') {
+                                event = EVENT_STRAFE_RIGHT;
+                        } else if(c == ' ') {
+                                event = EVENT_ACTION;
+                        } else if(c == 'f') {
+                                event = EVENT_FIRE;
+                        } else if(c == 'q') {
+                                event = EVENT_QUIT;
+                        }                                                                       
+                }
+        return event;
+*/
 }
+
 
 

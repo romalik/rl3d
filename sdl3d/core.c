@@ -27,6 +27,12 @@ struct Intersection {
 
 struct Intersection * intersectionBuffer;
 
+Texture  * __texture;
+
+void loadTextures() {
+	__texture = loadTexture("tex.bmp");
+	printf("Texture : %p \n", __texture);
+}
 
 int core_init(int argc, char ** argv) {
 	load_map(&map, argv[1]);
@@ -48,6 +54,9 @@ int core_init(int argc, char ** argv) {
 	zBuffer = (float *)malloc(viewport.h * viewport.w * sizeof(float));
 
 	io_init(&viewport);
+#if RENDER_TEXTURES == 1
+	loadTextures();
+#endif
 
 	return 0;
 }
@@ -179,9 +188,15 @@ void drawWalls() {
             int targetStart = (1.0f - scaleFactor)*viewport.h/2.0f;                                          
             int targetEnd = (1.0f + scaleFactor)*viewport.h/2.0f;                                            
 			int r;
-            for(r = max(targetStart,0); r<min(targetEnd, viewport.h); r++) {                    
-                /*cv::Vec3b colour = texLine.at<cv::Vec3b>(texLine.rows*(r-targetStart)/(targetEnd-targetStart),0);;*/
-				int colour = textype;
+            for(r = max(targetStart,0); r<min(targetEnd, viewport.h); r++) {                   
+				int colour = 0;
+				#if RENDER_TEXTURES == 1
+				int tCol = __texture->w*offset;
+				int tRow = __texture->h*(r-targetStart)/(targetEnd - targetStart);
+                colour = __texture->data[tRow * __texture->w + tCol];
+				#else
+				colour = textype;
+				#endif
                 if(colour == 255) {                          
                     //transparent                                                                             
                 } else {                                                                                      
@@ -238,23 +253,34 @@ double getTime() {
 } 
 
 void processEvent(int k) {
-        if((char)k == 'q') {                                                                                  
+		playerState.ds = playerState.df = playerState.dyaw = 0;
+        if(k & EVENT_QUIT) {                                                                                  
             terminateRequest = 1;
-        } else if((char)k == ',') {                                                                           
-            playerState.ds = -1.0f;                                                                                        
-        } else if((char)k == '.') {                                                                           
-            playerState.ds = 1.0f;                                                                                       
-        } else if((char)k == 'a') {                                                                           
+        }
+		if(k & EVENT_STRAFE_LEFT) {                                                                           
+            playerState.ds = -2.0f;                                                                                        
+        }
+		if(k & EVENT_STRAFE_RIGHT) {                                                                           
+            playerState.ds = 2.0f;                                                                                       
+        }
+		if(k & EVENT_TURN_LEFT) {                                                                           
             playerState.dyaw = +1.0f;                                                                                   
-        } else if((char)k == 'd') {                                                                           
+        }
+		if(k & EVENT_TURN_RIGHT) {                                                                           
             playerState.dyaw = -1.0f;                                                                                   
-        } else if((char)k == 's') {                                                                           
-            playerState.df = -5.0f;                                                                                       
-        } else if((char)k == 'w') {                                                                           
-            playerState.df = 5.0f;                                                                                        
-		} else {
-			playerState.ds = playerState.df = playerState.dyaw = 0;
+        }
+		if(k & EVENT_BACKWARD) {                                                                           
+            playerState.df = -2.0f;                                                                                       
+        }
+		if(k & EVENT_FORWARD) {                                                                           
+            playerState.df = 2.0f;                                                                                        
 		}
+		if(k & EVENT_SPRINT) {
+			playerState.df *= 2.0f;
+			playerState.ds *= 2.0f;
+			playerState.dyaw *= 2.0f;
+		}
+
 }
 
 int core_loop() {
@@ -274,8 +300,7 @@ int core_loop() {
 	drawBg();
 	drawWalls();
 	refresh_viewport(&viewport);
-	usleep(100*1000);
-
+	usleep(20*1000);
 	int event = io_getEvent();
 	processEvent(event);
     if(terminateRequest)

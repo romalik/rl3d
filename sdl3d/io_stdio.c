@@ -70,7 +70,26 @@ void stdio_io_uninit(struct Viewport * vp) {
 int stdio_io_getEvent() {
 	int event = 0;
 	    if(kbhit()) {
-			event = getchar();                                                                                    
+			int c = getchar();
+			if(c == 'w') {
+				event = EVENT_FORWARD;
+			} else if(c == 's') {
+				event = EVENT_BACKWARD;
+			} else if(c == 'a') {
+				event = EVENT_TURN_LEFT;
+			} else if(c == 'd') {
+				event = EVENT_TURN_RIGHT;
+			} else if(c == ',') {
+				event = EVENT_STRAFE_LEFT;
+			} else if(c == '.') {
+				event = EVENT_STRAFE_RIGHT;
+			} else if(c == ' ') {
+				event = EVENT_ACTION;
+			} else if(c == 'f') {
+				event = EVENT_FIRE;
+			} else if(c == 'q') {
+				event = EVENT_QUIT;
+			}                                                                       
 		}
 	return event;
 }
